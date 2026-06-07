@@ -1047,8 +1047,8 @@ public class BlackBoxCore extends ClientConfiguration {
         // ===== SDK PROTECTION INIT =====
         try {
             SdkProtectionManager.getInstance().initialize(sContext);
-            SdkProtectionManager.getInstance().setEnabled(false);
-            Slog.i(TAG, "SDK Protection initialized in UE4-compatible passive mode");
+            SdkProtectionManager.getInstance().setEnabled(true);
+            Slog.i(TAG, "SDK Protection initialized with safe native stubs");
         } catch (Exception e) {
             Slog.w(TAG, "SDK Protection init failed: " + e.getMessage());
         }
@@ -1189,10 +1189,8 @@ public class BlackBoxCore extends ClientConfiguration {
         // ===== SDK PROTECTION FOR GAMES =====
         if (GameProtectionManager.getInstance().isGame(packageName)) {
             SdkProtectionManager.getInstance().onGameLaunch(packageName);
-            // Native signal/library mediation is intentionally passive for UE4 games;
-            // GameIntegrityGuard monitoring can install extra probes while libUE4 audio
-            // threads are starting, so do not start it automatically here.
-            Slog.i(TAG, "SDK Protection kept passive for game: " + packageName);
+            GameIntegrityGuard.getInstance().startMonitoring(packageName);
+            Slog.i(TAG, "SDK Protection activated for game with safe native stubs: " + packageName);
         }
         // =====================================
         

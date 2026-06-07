@@ -97,6 +97,7 @@ public class BlackBoxCore extends ClientConfiguration {
     public static final String TAG = "BlackBoxCore";
 
     private static final BlackBoxCore sBlackBoxCore = new BlackBoxCore();
+    private static final boolean ENABLE_EARLY_NATIVE_CRASH_PREVENTION = false;
     private static Context sContext;
     
     static {
@@ -107,10 +108,14 @@ public class BlackBoxCore extends ClientConfiguration {
             Slog.d(TAG, "Stack trace filter installed at class loading time");
             SocialMediaAppCrashPrevention.initialize();
             Slog.d(TAG, "Social media app crash prevention initialized at class loading time");
-            DexCrashPrevention.initialize();
-            Slog.d(TAG, "DEX crash prevention initialized at class loading time");
-            NativeCrashPrevention.initialize();
-            Slog.d(TAG, "Native crash prevention initialized at class loading time");
+            if (ENABLE_EARLY_NATIVE_CRASH_PREVENTION) {
+                DexCrashPrevention.initialize();
+                Slog.d(TAG, "DEX crash prevention initialized at class loading time");
+                NativeCrashPrevention.initialize();
+                Slog.d(TAG, "Native crash prevention initialized at class loading time");
+            } else {
+                Slog.i(TAG, "Early DEX/native crash prevention hooks disabled for UE4 compatibility");
+            }
             CrashMonitor.initialize();
             Slog.d(TAG, "Comprehensive crash monitoring initialized at class loading time");
         } catch (Exception e) {
@@ -1042,8 +1047,8 @@ public class BlackBoxCore extends ClientConfiguration {
         // ===== SDK PROTECTION INIT =====
         try {
             SdkProtectionManager.getInstance().initialize(sContext);
-            SdkProtectionManager.getInstance().setEnabled(true);
-            Slog.i(TAG, "SDK Protection initialized and enabled");
+            SdkProtectionManager.getInstance().setEnabled(false);
+            Slog.i(TAG, "SDK Protection initialized in UE4-compatible passive mode");
         } catch (Exception e) {
             Slog.w(TAG, "SDK Protection init failed: " + e.getMessage());
         }
@@ -1184,8 +1189,10 @@ public class BlackBoxCore extends ClientConfiguration {
         // ===== SDK PROTECTION FOR GAMES =====
         if (GameProtectionManager.getInstance().isGame(packageName)) {
             SdkProtectionManager.getInstance().onGameLaunch(packageName);
-            GameIntegrityGuard.getInstance().startMonitoring(packageName);
-            Slog.i(TAG, "SDK Protection activated for game: " + packageName);
+            // Native signal/library mediation is intentionally passive for UE4 games;
+            // GameIntegrityGuard monitoring can install extra probes while libUE4 audio
+            // threads are starting, so do not start it automatically here.
+            Slog.i(TAG, "SDK Protection kept passive for game: " + packageName);
         }
         // =====================================
         

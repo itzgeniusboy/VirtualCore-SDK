@@ -19,6 +19,9 @@ public class SdkProtectionManager {
             "/clone/", "/sandbox/", "/niunaijun/", "/bcore/", "/vbox/"
     };
 
+    private static final boolean ENABLE_NATIVE_LIBRARY_MEDIATION = false;
+    private static final boolean ENABLE_NATIVE_SIGNAL_HANDLER = false;
+
     private static SdkProtectionManager sInstance;
     private boolean mEnabled;
 
@@ -35,8 +38,16 @@ public class SdkProtectionManager {
         mEnabled = enabled;
         Slog.i(TAG, "setEnabled=" + enabled);
         if (enabled) {
-            mediateLibraryLoading();
-            ensureSignalCompatibility();
+            if (ENABLE_NATIVE_LIBRARY_MEDIATION) {
+                mediateLibraryLoading();
+            } else {
+                Slog.i(TAG, "Native library mediation disabled for UE4 compatibility");
+            }
+            if (ENABLE_NATIVE_SIGNAL_HANDLER) {
+                ensureSignalCompatibility();
+            } else {
+                Slog.i(TAG, "Native signal handler disabled for UE4 compatibility");
+            }
             virtualizePaths();
         }
     }
@@ -47,7 +58,7 @@ public class SdkProtectionManager {
 
     public void onGameLaunch(String packageName) {
         Slog.i(TAG, "onGameLaunch: " + packageName);
-        if (mEnabled) {
+        if (mEnabled && ENABLE_NATIVE_LIBRARY_MEDIATION) {
             mediateLibraryLoading();
         }
     }

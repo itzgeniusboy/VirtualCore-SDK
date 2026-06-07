@@ -148,7 +148,10 @@ public class HookManager {
             addInjector(new GoogleAccountManagerProxy());
             addInjector(new AuthenticationProxy());
             addInjector(new AndroidIdProxy());
-            addInjector(new AudioPermissionProxy());
+            // Keep audio on the real framework path for UE4 games.
+            // The broad AudioPermissionProxy intercepts getMode/setBluetoothScoOn
+            // during AudioTrack startup and is not present in RIYAZSDK.
+            // addInjector(new AudioPermissionProxy());
             addInjector(new ILocationManagerProxy());
             addInjector(new IStorageManagerProxy());
             addInjector(new ILauncherAppsProxy());
